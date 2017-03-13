@@ -1,0 +1,37 @@
+﻿1.inner join、left join、cross table
+ http://www.phpddt.com/db/inner_join-outer-join.html
+
+
+select * from stg.d_jushuitan_detail  where regexp_extract(stg.d_jushuitan_detail.name , '【（\\S+）】', 1)  is not null'"
+
+2.row_number()
+eg:select email,customerID,ROW_NUMBER() over(order by psd) as rows from table_a ;
+   先按psd进行排序，排序完后，给每条数据进行编号。
+
+3.string -> int
+insert into model.dw_keyword (dw_id,keyword)
+ WITH product as (
+    SELECT DISTINCT UNNEST (ARRAY[category_1,category_2]) AS keyword
+    FROM ods.d_bolome_product_category
+ ), keyword_t AS (
+     SELECT  p.keyword
+     from product p
+     LEFT JOIN model.dw_keyword dw_keyword
+     ON p.keyword  = dw_keyword.keyword
+     WHERE dw_keyword.keyword IS NULL
+  ),
+  
+  a as (
+    SELECT coalesce(dw_keyword_max.dw_id, 0) + row_number() over (order by 1) as dw_id, k.keyword from keyword_t k
+    CROSS JOIN  (select max(dw_id) as dw_id from model.dw_keyword) dw_keyword_max
+  )
+    SELECT * from a ;
+
+4.ALTER TABLE conf.d_cocacola_fa_sku_mapping RENAME TO d_cocacola_fa_sku ; 
+
+  drop table conf.d_cocacola_fa_sku_mapping ;
+ 
+  insert into conf.d_cocacola_fa_sku_mapping (item_type,display_item,xorder,product_item,sum)
+  select * from conf.d_cocacola_fa_sku;
+
+  drop table conf.d_cocacola_fa_sku ;
